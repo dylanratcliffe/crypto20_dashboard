@@ -2,6 +2,7 @@ require 'rest-client'
 require 'json'
 
 points = []
+labels = []
 last_x = 1
 
 SCHEDULER.every '5s' do
@@ -28,7 +29,13 @@ SCHEDULER.every '5s' do
 
   last_x += 1
   points << { x: last_x, y: response['usd_value'] }
-  send_event('usd_value', points: points)
+  labels << Time.new.to_i
+
+  # Limit the amount of data
+  data_limit = 100
+  points.drop(points.legth - data_limit) if points.length > data_limit
+  labels.drop(labels.legth - data_limit) if labels.length > data_limit
+  send_event('usd_value', { points: points, labels: labels })
 
   # Calculate percetage
   growth = (((response['usd_value'].to_f / response['presale'].to_f) - 1)*100).round(1)

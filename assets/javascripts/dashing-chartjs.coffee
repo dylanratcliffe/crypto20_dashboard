@@ -1,13 +1,5 @@
 class Dashing.Chartjs extends Dashing.Widget
 
-  polarAreaChart: (id, datasets) ->
-    data = datasets.map (d) => @merge(this.circleColor(d.colorName), label: d.label, value: d.value)
-    new Chart(document.getElementById(id).getContext("2d")).PolarArea(data)
-
-  pieChart: (id, datasets) ->
-    data = datasets.map (d) => @merge(this.circleColor(d.colorName), label: d.label, value: d.value)
-    new Chart(document.getElementById(id).getContext("2d")).Pie(data)
-
   doughnutChart: (id, data) ->
     config = {
       type: 'doughnut',
@@ -25,20 +17,52 @@ class Dashing.Chartjs extends Dashing.Widget
     }
     new Chart(document.getElementById(id).getContext("2d"), config)
 
-  lineChart: (id, labels, datasets) ->
-    data = @merge labels: labels,
-      datasets: datasets.map (d) => @merge(this.color(d.colorName), label: d.label, data: d.data)
-    new Chart(document.getElementById(id).getContext("2d")).Line(data)
+  lineChart: (id, data, labels) ->
+    config = {
+      type: 'line',
+      data: {
+        labels: labels
+        datasets: [{
+          data: data,
+          backgroundColor: 'rgba(255,255,255,0.5)',
+          borderColor: 'rgba(255,255,255,1)',
+          pointRadius: 0,
+        }],
+      },
+      fill: true,
+      options: {
+        responsive: true,
+        legend: {
+          display: false,
+        },
+        title:{
+          display: false,
+          text:'$USD Value'
+        },
+        tooltips: {
+          mode: 'index',
+          intersect: false,
+        },
+        hover: {
+          mode: 'nearest',
+          intersect: true
+        },
+        scales: {
+          xAxes: [{
+            display: false,
+          }],
+          yAxes: [{
+            display: false,
+            scaleLabel: {
+              display: true,
+              labelString: '$USD'
+            }
+          }]
+        }
+      }
+    }
+    new Chart(document.getElementById(id).getContext("2d"), config)
 
-  barChart: (id, labels, datasets) ->
-    data = @merge labels: labels,
-      datasets: datasets.map (d) => @merge(this.color(d.colorName), label: d.label, data: d.data)
-    new Chart(document.getElementById(id).getContext("2d")).Bar(data)
-
-  radarChart: (id, labels, datasets) ->
-    data = @merge labels: labels,
-      datasets: datasets.map (d) => @merge(this.color(d.colorName), label: d.label, data: d.data)
-    new Chart(document.getElementById(id).getContext("2d")).Radar(data)
 
   merge: (xs...) =>
     if xs?.length > 0

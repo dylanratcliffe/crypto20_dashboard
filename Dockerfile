@@ -1,4 +1,5 @@
 FROM starefossen/ruby-node:latest
+MAINTAINER Dylan Ratcliffe <dylan.ratcliffe@puppet.com>
 
 RUN mkdir /app
 WORKDIR /app
@@ -10,4 +11,4 @@ COPY . /app
 
 EXPOSE 3030
 
-CMD ["bundle", "exec", "smashing", "start", "--debug", "2>&1"]
+CMD ["bundle", "exec", "smashing", "start"]

@@ -1,5 +1,10 @@
 class Dashing.Line extends Dashing.Chartjs
 
+  @accessor 'current', ->
+    points = @get('points')
+    if points
+      points[points.length - 1].y
+
   ready: ->
     @chart = @lineChart("line",@get('points'),@get('labels'))
     @chart

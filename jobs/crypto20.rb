@@ -59,7 +59,16 @@ SCHEDULER.every '5s' do
       label: 'Etherium',
     },
   ]
-  send_event('split', datasets: split)
+
+  # Format the data correctly
+  data = {
+    datasets: [{
+      data: split.map {|s| s[:value] },
+      backgroundColor: split.map {|s| s[:colorName] },
+    }],
+    labels: split.map {|s| s[:label] },
+  }
+  send_event('split', data: data)
 
   send_event('presale', current: response['presale'])
   send_event('btc_received', current: response['btc_received'])

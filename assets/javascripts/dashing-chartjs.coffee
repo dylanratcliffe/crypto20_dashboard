@@ -8,9 +8,22 @@ class Dashing.Chartjs extends Dashing.Widget
     data = datasets.map (d) => @merge(this.circleColor(d.colorName), label: d.label, value: d.value)
     new Chart(document.getElementById(id).getContext("2d")).Pie(data)
 
-  doughnutChart: (id, datasets) ->
-    data = datasets.map (d) => @merge(this.circleColor(d.colorName), label: d.label, value: d.value)
-    new Chart(document.getElementById(id).getContext("2d")).Doughnut(data)
+  doughnutChart: (id, data) ->
+    config = {
+      type: 'doughnut',
+      data: data,
+      options: {
+        responsive: true,
+        legend: {
+          display: false,
+        }
+        animation: {
+          animateScale: false,
+          animateRotate: false
+        }
+      }
+    }
+    new Chart(document.getElementById(id).getContext("2d"), config)
 
   lineChart: (id, labels, datasets) ->
     data = @merge labels: labels,

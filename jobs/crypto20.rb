@@ -45,17 +45,17 @@ SCHEDULER.every '5s' do
   split = [
     {
       value: btc_value_usd,
-      colorName: 'yellow',
+      color: 'rgb(253, 180, 92)',
       label: 'Bitcoin',
     },
     {
       value: ltc_value_usd,
-      colorName: 'lightgray',
+      color: 'rgb(220, 220, 220)',
       label: 'Litecoin',
     },
     {
       value: eth_value_usd,
-      colorName: 'blue',
+      color: 'rgb(151, 187, 205)',
       label: 'Etherium',
     },
   ]
@@ -64,7 +64,7 @@ SCHEDULER.every '5s' do
   data = {
     datasets: [{
       data: split.map {|s| s[:value] },
-      backgroundColor: split.map {|s| s[:colorName] },
+      backgroundColor: split.map {|s| s[:color] },
     }],
     labels: split.map {|s| s[:label] },
   }

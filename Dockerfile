@@ -5,7 +5,7 @@ RUN mkdir /app
 WORKDIR /app
 
 COPY Gemfile Gemfile.lock /app/
-RUN bundle install -j 8
+RUN bundle install -j 8 --without development
 
 COPY . /app
 

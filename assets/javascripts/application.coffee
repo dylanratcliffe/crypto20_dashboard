@@ -7,6 +7,7 @@
 #= require_tree ../../widgets
 
 console.log("Yeah! The dashboard has started!")
+console.log("Version: 0.1.1")
 
 Dashing.on 'ready', ->
   Dashing.widget_margins ||= [5, 5]

@@ -33,8 +33,8 @@ SCHEDULER.every '3s' do
 
   # Limit the amount of data
   data_limit = 290
-  points.drop(points.legth - data_limit) if points.length > data_limit
-  labels.drop(labels.legth - data_limit) if labels.length > data_limit
+  points.drop(points.length - data_limit) if points.length > data_limit
+  labels.drop(labels.length - data_limit) if labels.length > data_limit
   send_event('usd_value', { points: points, labels: labels })
 
   # Calculate percetage

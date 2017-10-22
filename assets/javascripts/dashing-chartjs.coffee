@@ -35,6 +35,9 @@ class Dashing.Chartjs extends Dashing.Widget
         legend: {
           display: false,
         },
+        animation: {
+          duration: 0,
+        },
         title:{
           display: false,
           text:'$USD Value'

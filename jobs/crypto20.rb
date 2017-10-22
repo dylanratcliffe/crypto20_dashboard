@@ -82,7 +82,8 @@ SCHEDULER.every '3s' do
   send_event('backers', current: response['backers'])
 end
 
-
+# Calculate a new point every 8 mins. But rely on another task to actually send
+# the data
 SCHEDULER.every '8m' do
   last_x += 1
   points << { x: last_x, y: current_value }
@@ -96,5 +97,11 @@ SCHEDULER.every '8m' do
   if labels.length > data_limit
     labels = labels.drop(labels.length - data_limit)
   end
+end
+
+# I can't work out a nice way of providing the data to the clients initally when
+# they load the dashobard. For now I'll just put a timer on and re-send the
+# whole thing every two seconds. There must be a better way to do this
+SCHEDULER.every "2s" do
   send_event('usd_value', { points: points, labels: labels })
 end

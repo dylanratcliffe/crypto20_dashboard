@@ -6,6 +6,7 @@ points        = []
 labels        = []
 last_x        = 1
 current_value = 0
+current_nav   = 0.to_f
 
 SCHEDULER.every '3s' do
   # Do all external requests in parallel
@@ -74,6 +75,18 @@ SCHEDULER.every '3s' do
     labels: split.map {|s| s[:label] },
   }
   send_event('split', data: data)
+
+  # Calculate NAV
+  current_nav = ((current_value.to_f / response['presale'].to_f)* 0.87) * 0.98
+  percent     = ((current_nav - 1) / 1.00) * 100
+  # If the percentage is negative, make it positive and set the arrow to down
+  if percent < 0
+    percent   = percent * -1.0
+    direction = 'down'
+  else
+    direction = 'up'
+  end
+  send_event('nav', { current: current_nav.round(3), diff: percent.round(2), direction: direction })
 
   send_event('presale', current: response['presale'])
   send_event('btc_received', current: response['btc_received'])

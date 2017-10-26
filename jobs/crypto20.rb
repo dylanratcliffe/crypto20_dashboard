@@ -62,7 +62,7 @@ SCHEDULER.every '3s' do
     {
       value: eth_value_usd,
       color: 'rgb(151, 187, 205)',
-      label: 'Etherium',
+      label: 'Ethereum',
     },
   ]
 

@@ -11,26 +11,27 @@ current_nav   = 0.to_f
 # Temporarily added until we get an API
 # This is the amount held in cold, we will add live values to this
 COLD_FUNDS = {
-  BTC:   190.12,
-  ETH:   4262.22,
-  BCH:   1252.00,
-  XRP:   6349758.35,
-  LTC:   19430.30,
-  DASH:  2701.944949,
-  NEO:   22147.93,
-  MIOTA: 943340.00,
-  XMR:   5338.31,
-  XEM:   3104649.88,
-  ETC:   34130.78,
-  LSK:   39875.55,
-  QTUM:  25012.39,
-  EOS:   168518.57,
-  HSR:   15338.38,
-  OMG:   36174.67,
-  ZEC:   945.62,
-  ADA:   9163713.54,
-  XLM:   6282537.55,
-  WAVES: 34920.00,
+  bitcoin:              190.12,
+  ethereum:             4262.22,
+  'bitcoin-cash':       1252.00,
+  ripple:               6349758.35,
+  litecoin:             19430.30,
+  dash:                 2701.944949,
+  neo:                  22147.93,
+  iota:                 943340.00,
+  monero:               5338.31,
+  nem:                  3104649.88,
+  'ethereum-classic':   34130.78,
+  lisk:                 39875.55,
+  qtum:                 25012.39,
+  eos:                  168518.57,
+  hshare:               15338.38,
+  omisego:              36174.67,
+  zcash:                945.62,
+  cardano:              9163713.54,
+  stellar:              6282537.55,
+  waves:                34920.00,
+  'bitcoin-gold':       458.00,
 }
 
 SPENT_FUNDS = {
@@ -76,13 +77,14 @@ COLORS = {
   NXT:   "#008FBB",
   SIA:   "#00CBA0",
   DAO:   "#FF3B3B",
+  BTG:   "#F7931A",
 }
 
 def current_fund_value(crypto_prices,funds_held)
   total_value = 0.0
 
   funds_held.each do |coin,count|
-    price = crypto_prices.select{|c| c['symbol'] == coin.to_s}[0]['price_usd'].to_f
+    price = crypto_prices.select{|c| c['id'] == coin.to_s}[0]['price_usd'].to_f
     value = price * count.to_f
     total_value += value
   end
@@ -90,11 +92,24 @@ def current_fund_value(crypto_prices,funds_held)
   total_value.round(0)
 end
 
+# If we have data we ripped from the old /events endpoint, read it in
+SCHEDULER.in '0s' do
+  file = File.read('bootstrap_data/points.json')
+  data = JSON.parse(file)
+  data['points'].each do |point|
+    points << { x: point['x'], y: point['y'] }
+    last_x = point['x']
+  end
+  data['labels'].each do |label|
+    labels << label
+  end
+end
+
 SCHEDULER.every '3s' do
   # Do all external requests in parallel
   requests = {
     main: 'https://www.crypto20.com/status',
-    all:  'https://api.coinmarketcap.com/v1/ticker/?limit=30',
+    all:  'https://api.coinmarketcap.com/v1/ticker/?limit=2000',
   }
 
   threads = []
@@ -108,9 +123,9 @@ SCHEDULER.every '3s' do
 
   # Get the current funds held by combining cold and hot funds
   funds = COLD_FUNDS.clone
-  funds[:ETH] += requests[:main]['eth_received'] - SPENT_FUNDS[:ETH]
-  funds[:BTC] += requests[:main]['btc_received'] - SPENT_FUNDS[:BTC]
-  funds[:LTC] += requests[:main]['ltc_received'] - SPENT_FUNDS[:LTC]
+  funds[:ethereum] += requests[:main]['eth_received'] - SPENT_FUNDS[:ETH]
+  funds[:bitcoin] += requests[:main]['btc_received'] - SPENT_FUNDS[:BTC]
+  funds[:litecoin] += requests[:main]['ltc_received'] - SPENT_FUNDS[:LTC]
 
   # Get current value for graph
   current_value = current_fund_value(requests[:all],funds)
@@ -120,17 +135,14 @@ SCHEDULER.every '3s' do
 
   # Calculate split
   split = []
-  funds.each do |symbol,count|
-    coin_stats = requests[:all].select{|c| c['symbol'] == symbol.to_s}[0]
+  funds.each do |id,count|
+    coin_stats = requests[:all].select{|c| c['id'] == id.to_s}[0]
     split << {
-      value: coin_stats['price_usd'].to_i * count.to_i,
-      color: COLORS[symbol],
+      value: coin_stats['price_usd'].to_f * count.to_f,
+      color: COLORS[coin_stats['symbol'].to_sym],
       label: coin_stats['name']
     }
-    puts symbol.inspect
   end
-
-  puts split.inspect
 
   # Format the data correctly
   data = {
@@ -155,9 +167,6 @@ SCHEDULER.every '3s' do
   send_event('nav', { current: current_nav.round(3), diff: percent.round(2), direction: direction })
 
   send_event('presale', current: response['presale'])
-  # send_event('btc_received', current: response['btc_received'])
-  # send_event('ltc_received', current: response['ltc_received'])
-  # send_event('eth_received', current: response['eth_received'])
   send_event('backers', current: response['backers'])
 end
 

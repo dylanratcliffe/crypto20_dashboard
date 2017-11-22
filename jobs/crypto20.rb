@@ -8,37 +8,6 @@ last_x        = 1
 current_value = 0
 current_nav   = 0.to_f
 
-# Temporarily added until we get an API
-# This is the amount held in cold, we will add live values to this
-COLD_FUNDS = {
-  BTC:   190.12,
-  ETH:   4262.22,
-  BCH:   1252.00,
-  XRP:   6349758.35,
-  LTC:   19430.30,
-  DASH:  2701.944949,
-  NEO:   22147.93,
-  MIOTA: 943340.00,
-  XMR:   5338.31,
-  XEM:   3104649.88,
-  ETC:   34130.78,
-  LSK:   39875.55,
-  QTUM:  25012.39,
-  EOS:   168518.57,
-  HSR:   15338.38,
-  OMG:   36174.67,
-  ZEC:   945.62,
-  ADA:   9163713.54,
-  XLM:   6282537.55,
-  WAVES: 34920.00,
-}
-
-SPENT_FUNDS = {
-  ETH: 24370,
-  BTC: 707,
-  LTC: 14461,
-}
-
 COLORS = {
   BTC:   "#F7931A",
   BCH:   "#F7931A",
@@ -76,25 +45,27 @@ COLORS = {
   NXT:   "#008FBB",
   SIA:   "#00CBA0",
   DAO:   "#FF3B3B",
+  BTG:   "#F7931A",
 }
 
-def current_fund_value(crypto_prices,funds_held)
-  total_value = 0.0
-
-  funds_held.each do |coin,count|
-    price = crypto_prices.select{|c| c['symbol'] == coin.to_s}[0]['price_usd'].to_f
-    value = price * count.to_f
-    total_value += value
+# If we have data we ripped from the old /events endpoint, read it in
+SCHEDULER.in '0s' do
+  file = File.read('bootstrap_data/points.json')
+  data = JSON.parse(file)
+  data['points'].each do |point|
+    points << { x: point['x'], y: point['y'] }
+    last_x = point['x']
   end
-
-  total_value.round(0)
+  data['labels'].each do |label|
+    labels << label
+  end
 end
 
 SCHEDULER.every '3s' do
   # Do all external requests in parallel
   requests = {
     main: 'https://www.crypto20.com/status',
-    all:  'https://api.coinmarketcap.com/v1/ticker/?limit=30',
+    btg:  'https://api.coinmarketcap.com/v1/ticker/bitcoin-gold/',
   }
 
   threads = []
@@ -106,31 +77,25 @@ SCHEDULER.every '3s' do
   # store the main response to save code
   response = requests[:main]
 
-  # Get the current funds held by combining cold and hot funds
-  funds = COLD_FUNDS.clone
-  funds[:ETH] += requests[:main]['eth_received'] - SPENT_FUNDS[:ETH]
-  funds[:BTC] += requests[:main]['btc_received'] - SPENT_FUNDS[:BTC]
-  funds[:LTC] += requests[:main]['ltc_received'] - SPENT_FUNDS[:LTC]
-
+  # Get bitcoin-gold value (we have approx 458 coins)
+  btg_usd = requests[:btg][0]['price_usd'].to_i * 458
+  response['holdings'] << { 'name' => 'BTG', 'value' => btg_usd }
+  
   # Get current value for graph
-  current_value = current_fund_value(requests[:all],funds)
+  current_value = response['usd_value'].to_f + btg_usd.to_f
 
   # Send an event to update the number but not the whole graph
   send_event('usd_value', value: current_value)
 
   # Calculate split
   split = []
-  funds.each do |symbol,count|
-    coin_stats = requests[:all].select{|c| c['symbol'] == symbol.to_s}[0]
+  response['holdings'].each do |asset|
     split << {
-      value: coin_stats['price_usd'].to_i * count.to_i,
-      color: COLORS[symbol],
-      label: coin_stats['name']
+      value: asset['value'],
+      color: COLORS[asset['name'].to_sym],
+      label: asset['name']
     }
-    puts symbol.inspect
   end
-
-  puts split.inspect
 
   # Format the data correctly
   data = {
@@ -143,7 +108,12 @@ SCHEDULER.every '3s' do
   send_event('split', data: data)
 
   # Calculate NAV
-  current_nav = ((current_value.to_f / response['presale'].to_f)* 0.87) * 0.98
+  current_nav = response['nav_per_token']
+
+  # BTG component of NAV
+  btg_nav = btg_usd.to_f / response['presale'].to_f * 0.98 * 0.87
+  current_nav += btg_nav
+
   percent     = ((current_nav - 1) / 1.00) * 100
   # If the percentage is negative, make it positive and set the arrow to down
   if percent < 0
@@ -155,9 +125,6 @@ SCHEDULER.every '3s' do
   send_event('nav', { current: current_nav.round(3), diff: percent.round(2), direction: direction })
 
   send_event('presale', current: response['presale'])
-  # send_event('btc_received', current: response['btc_received'])
-  # send_event('ltc_received', current: response['ltc_received'])
-  # send_event('eth_received', current: response['eth_received'])
   send_event('backers', current: response['backers'])
 end
 

@@ -68,8 +68,6 @@ SCHEDULER.every '3s' do
     btg:  'https://api.coinmarketcap.com/v1/ticker/bitcoin-gold/',
   }
 
-  threads = []
-
   requests.each do |name, url|
     requests[name] = JSON.parse(RestClient.get(url).body)
   end
@@ -80,7 +78,7 @@ SCHEDULER.every '3s' do
   # Get bitcoin-gold value (we have approx 458 coins)
   btg_usd = requests[:btg][0]['price_usd'].to_i * 458
   response['holdings'] << { 'name' => 'BTG', 'value' => btg_usd }
-  
+
   # Get current value for graph
   current_value = response['usd_value'].to_f + btg_usd.to_f
 

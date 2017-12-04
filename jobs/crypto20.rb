@@ -1,5 +1,7 @@
 require 'rest-client'
+require 'mongo'
 require 'json'
+
 
 requests      = []
 points        = []
@@ -7,6 +9,13 @@ labels        = []
 last_x        = 1
 current_value = 0
 current_nav   = 0.to_f
+
+# Database Variables
+mongo_hostname = ENV['MONGO_HOSTNAME'] || '127.0.0.1'
+mongo_port     = ENV['MONGO_PORT']     || '27017'
+mongo_database = ENV['MONGO_DATABASE'] || 'main'
+Mongo::Logger.logger.level = ::Logger::FATAL
+@mongo = Mongo::Client.new([ "#{mongo_hostname}:#{mongo_port}" ], :database => mongo_database)
 
 COLORS = {
   BTC:   "#F7931A",
@@ -48,46 +57,26 @@ COLORS = {
   BTG:   "#F7931A",
 }
 
-# If we have data we ripped from the old /events endpoint, read it in
-SCHEDULER.in '0s' do
-  file = File.read('bootstrap_data/points.json')
-  data = JSON.parse(file)
-  data['points'].each do |point|
-    points << { x: point['x'], y: point['y'] }
-    last_x = point['x']
-  end
-  data['labels'].each do |label|
-    labels << label
-  end
+def get_stat(stat)
+  @mongo[:statistics].find({
+    name: stat,
+    }).first['value']
+end
+
+def holdings
+  @mongo[:holdings].find
 end
 
 SCHEDULER.every '3s' do
-  # Do all external requests in parallel
-  requests = {
-    main: 'https://www.crypto20.com/status',
-    btg:  'https://api.coinmarketcap.com/v1/ticker/bitcoin-gold/',
-  }
-
-  requests.each do |name, url|
-    requests[name] = JSON.parse(RestClient.get(url).body)
-  end
-
-  # store the main response to save code
-  response = requests[:main]
-
-  # Get bitcoin-gold value (we have approx 458 coins)
-  btg_usd = requests[:btg][0]['price_usd'].to_i * 458
-  response['holdings'] << { 'name' => 'BTG', 'value' => btg_usd }
-
   # Get current value for graph
-  current_value = response['usd_value'].to_f + btg_usd.to_f
+  current_value = get_stat('usd_value').to_f
 
   # Send an event to update the number but not the whole graph
   send_event('usd_value', value: current_value)
 
   # Calculate split
   split = []
-  response['holdings'].each do |asset|
+  holdings.each do |asset|
     split << {
       value: asset['value'],
       color: COLORS[asset['name'].to_sym],
@@ -106,11 +95,7 @@ SCHEDULER.every '3s' do
   send_event('split', data: data)
 
   # Calculate NAV
-  current_nav = response['nav_per_token']
-
-  # BTG component of NAV
-  btg_nav = btg_usd.to_f / response['presale'].to_f * 0.98 * 0.87
-  current_nav += btg_nav
+  current_nav = get_stat('nav_per_token').to_f
 
   percent     = ((current_nav - 1) / 1.00) * 100
   # If the percentage is negative, make it positive and set the arrow to down
@@ -122,8 +107,8 @@ SCHEDULER.every '3s' do
   end
   send_event('nav', { current: current_nav.round(3), diff: percent.round(2), direction: direction })
 
-  send_event('presale', current: response['presale'])
-  send_event('backers', current: response['backers'])
+  send_event('presale', current: get_stat('presale'))
+  send_event('backers', current: get_stat('backers'))
 end
 
 # Calculate a new point every 8 mins. But rely on another task to actually send

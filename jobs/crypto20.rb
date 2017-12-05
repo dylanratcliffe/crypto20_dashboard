@@ -67,6 +67,28 @@ def holdings
   @mongo[:holdings].find
 end
 
+def historical_value(lim)
+  # TODO: This returns BSON objects and will need to be mapped
+  @mongo[:historical_value].find.limit(lim).map do |entry|
+    {
+      time: entry['time'].seconds,
+      value: entry['value'],
+    }
+  end
+end
+
+def values_to_graph(values,label_key,value_key)
+  points = []
+  labels = []
+  x      = 1
+  values.each do |value|
+    points << {x: x, y: value[value_key]}
+    labels << value[label_key]
+    x += 1
+  end
+  { points: points, labels: labels }
+end
+
 SCHEDULER.every '3s' do
   # Get current value for graph
   current_value = get_stat('usd_value').to_f
@@ -113,24 +135,26 @@ end
 
 # Calculate a new point every 8 mins. But rely on another task to actually send
 # the data
-SCHEDULER.every '8m' do
-  last_x += 1
-  points << { x: last_x, y: current_value }
-  labels << Time.new.to_i
-
-  # Limit the amount of data
-  data_limit = 290
-  if points.length > data_limit
-    points = points.drop(points.length - data_limit)
-  end
-  if labels.length > data_limit
-    labels = labels.drop(labels.length - data_limit)
-  end
-end
+# SCHEDULER.every '8m' do
+#   last_x += 1
+#   points << { x: last_x, y: current_value }
+#   labels << Time.new.to_i
+#
+#   # Limit the amount of data
+#   data_limit = 290
+#   if points.length > data_limit
+#     points = points.drop(points.length - data_limit)
+#   end
+#   if labels.length > data_limit
+#     labels = labels.drop(labels.length - data_limit)
+#   end
+# end
 
 # I can't work out a nice way of providing the data to the clients initally when
 # they load the dashobard. For now I'll just put a timer on and re-send the
 # whole thing every two seconds. There must be a better way to do this
-SCHEDULER.every "2s" do
-  send_event('usd_value', { points: points, labels: labels })
+SCHEDULER.every "5s" do
+  depth = 290
+  data  = values_to_graph(historical_value(depth),:time,:value)
+  send_event('usd_value', { points: data[:points], labels: data[:labels] })
 end

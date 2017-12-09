@@ -8,6 +8,7 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.12.2)
+    color (1.8)
     daemons (1.2.5)
     domain_name (0.5.20170404)
       unf (>= 0.0.5, < 1.0.0)
@@ -84,6 +85,7 @@ PLATFORMS
   x86_64-darwin-15
 
 DEPENDENCIES
+  color
   mongo
   pry
   rest-client

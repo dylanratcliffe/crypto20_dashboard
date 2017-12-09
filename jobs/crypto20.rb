@@ -1,12 +1,9 @@
 require 'rest-client'
 require 'mongo'
+require 'color'
+require 'date'
 require 'json'
 
-
-requests      = []
-points        = []
-labels        = []
-last_x        = 1
 current_value = 0
 current_nav   = 0.to_f
 
@@ -68,7 +65,6 @@ def holdings
 end
 
 def historical_value(lim)
-  # TODO: This returns BSON objects and will need to be mapped
   @mongo[:historical_value].find.limit(lim).map do |entry|
     {
       time: entry['time'].seconds,
@@ -133,22 +129,34 @@ SCHEDULER.every '3s' do
   send_event('backers', current: get_stat('backers'))
 end
 
-# Calculate a new point every 8 mins. But rely on another task to actually send
-# the data
-# SCHEDULER.every '8m' do
-#   last_x += 1
-#   points << { x: last_x, y: current_value }
-#   labels << Time.new.to_i
-#
-#   # Limit the amount of data
-#   data_limit = 290
-#   if points.length > data_limit
-#     points = points.drop(points.length - data_limit)
-#   end
-#   if labels.length > data_limit
-#     labels = labels.drop(labels.length - data_limit)
-#   end
-# end
+# Populate Bubble chart
+SCHEDULER.every "5s" do
+  # Get the date that we want ot start from
+  start_of_week = (Date.today - Date.today.wday) + 1
+
+  # Get all of the holdings data since that day
+
+
+  color = Color::RGB.by_hex("#F7931A")
+  bg    = color
+  line  = color.lighten_by(60)
+
+  datasets = [{
+    label: "Bitcoin",
+    backgroundColor: bg.html,
+    # borderColor: "#FF3B3B",
+    borderColor: line.html,
+    data: [{
+      x: 0.5,
+      y: 0.5,
+      r: 100,
+    }],
+    borderWidth: 2,
+
+  }]
+  send_event('contribution',{ datasets: datasets })
+end
+
 
 # I can't work out a nice way of providing the data to the clients initally when
 # they load the dashobard. For now I'll just put a timer on and re-send the

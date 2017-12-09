@@ -17,6 +17,48 @@ class Dashing.Chartjs extends Dashing.Widget
     }
     new Chart(document.getElementById(id).getContext("2d"), config)
 
+  bubbleChart: (id) ->
+    config = {
+      type: 'bubble',
+      data: {
+        datasets: [],
+      },
+      options: {
+        responsive: true,
+        # legend: {
+        #   display: false,
+        # },
+        animation: {
+          duration: 0,
+        },
+        # title:{
+        #   display: false,
+        #   text:'$USD Value'
+        # },
+        # tooltips: {
+        #   mode: 'index',
+        #   intersect: false,
+        # },
+        # hover: {
+        #   mode: 'nearest',
+        #   intersect: true
+        # },
+        # scales: {
+        #   xAxes: [{
+        #     display: false,
+        #   }],
+        #   yAxes: [{
+        #     display: false,
+        #     scaleLabel: {
+        #       display: true,
+        #       labelString: '$USD'
+        #     }
+        #   }]
+        # }
+      }
+    }
+    new Chart(document.getElementById(id).getContext("2d"), config)
+
   lineChart: (id, data, labels) ->
     config = {
       type: 'line',

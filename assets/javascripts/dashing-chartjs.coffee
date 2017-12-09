@@ -43,18 +43,38 @@ class Dashing.Chartjs extends Dashing.Widget
         #   mode: 'nearest',
         #   intersect: true
         # },
-        # scales: {
-        #   xAxes: [{
-        #     display: false,
-        #   }],
-        #   yAxes: [{
-        #     display: false,
-        #     scaleLabel: {
-        #       display: true,
-        #       labelString: '$USD'
-        #     }
-        #   }]
-        # }
+        legend: {
+          display: false,
+        },
+        tooltips: {
+          callbacks: {
+            label: `function (t,e) {
+              var n=e.datasets[t.datasetIndex].label||"",i=e.datasets[t.datasetIndex].data[t.index];
+              return n+": "+(e.datasets[t.datasetIndex].dollarGrowth).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,').replace(/(^-?)/,'$1\$')}`
+          }
+        },
+        scales: {
+          xAxes: [{
+            display: true,
+            labelString: '% of Fund',
+            fontColor: '#ffffff',
+            # ticks: {
+            #   callback: function(value, index, values) {
+            #     return value + '%';
+            #   }
+            # }
+          }],
+          yAxes: [{
+            display: true,
+            labelString: '% Growth',
+            fontColor: '#ffffff',
+            # ticks: {
+            #   callback: function(value, index, values) {
+            #     return value + '%';
+            #   }
+            # }
+          }]
+        }
       }
     }
     new Chart(document.getElementById(id).getContext("2d"), config)

@@ -61,7 +61,7 @@ def get_stat(stat)
 end
 
 def holdings
-  @mongo[:holdings].find
+  @mongo[:holdings].find.map { |e| e }
 end
 
 def historical_value(lim)
@@ -79,13 +79,13 @@ end
 
 def calculate_percent_growth(history,coin)
   initial_value = get_holding(history.first['holdings'],coin)['value'].to_f
-  final_value   = get_holding(history.last['holdings'],coin)['value'].to_f
+  final_value   = get_holding(holdings,coin)['value'].to_f
   (final_value - initial_value) / initial_value
 end
 
 def calculate_value_growth(history,coin)
   initial_value = get_holding(history.first['holdings'],coin)['value']
-  final_value   = get_holding(history.last['holdings'],coin)['value']
+  final_value   = get_holding(holdings,coin)['value']
   final_value - initial_value
 end
 
@@ -147,9 +147,6 @@ end
 
 # Populate Bubble chart
 SCHEDULER.every "5s" do
-  # Get the date that we want ot start from
-  start_of_week = (Date.today - Date.today.wday) + 1
-
   # Get all of the holdings and convert taht to an array of hashes
   current_holdings = @mongo[:holdings].find.map { |h| h }
 
@@ -188,16 +185,22 @@ SCHEDULER.every "5s" do
     }
   end
 
+  # Calculate the biggest mover for the period
+  biggest_mover    = movements.sort { |x,y|  x[:growth_value].abs <=> y[:growth_value].abs }.last
+  biggest_movement = biggest_mover[:growth_value].abs
+
+  # TODO: Make the dot size relative to the largest dot
   datasets = []
   movements.each do |movement|
     datasets << {
       label: movement[:name],
       backgroundColor: COLORS[movement[:name].to_sym],
       borderColor: Color::RGB.by_hex(COLORS[movement[:name].to_sym]).lighten_by(60).html,
+      dollarGrowth: movement[:growth_value],
       data: [{
         x: movement[:growth_percent],
         y: movement[:percent_of_fund],
-        r: (movement[:growth_value] / 10000).abs,
+        r: (movement[:growth_value].abs.to_f / biggest_movement.to_f) * 70.0,
       }],
       borderWidth: 2,
     }

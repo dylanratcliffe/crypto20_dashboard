@@ -67,10 +67,26 @@ end
 def historical_value(lim)
   @mongo[:historical_value].find.limit(lim).map do |entry|
     {
-      time: entry['time'].seconds,
+      time: entry['time'],
       value: entry['value'],
     }
   end
+end
+
+def get_holding(hldgs,name)
+  hldgs[hldgs.index{|x|x['name'] == name}]
+end
+
+def calculate_percent_growth(history,coin)
+  initial_value = get_holding(history.first['holdings'],coin)['value'].to_f
+  final_value   = get_holding(history.last['holdings'],coin)['value'].to_f
+  (final_value - initial_value) / initial_value
+end
+
+def calculate_value_growth(history,coin)
+  initial_value = get_holding(history.first['holdings'],coin)['value']
+  final_value   = get_holding(history.last['holdings'],coin)['value']
+  final_value - initial_value
 end
 
 def values_to_graph(values,label_key,value_key)
@@ -134,26 +150,59 @@ SCHEDULER.every "5s" do
   # Get the date that we want ot start from
   start_of_week = (Date.today - Date.today.wday) + 1
 
-  # Get all of the holdings data since that day
+  # Get all of the holdings and convert taht to an array of hashes
+  current_holdings = @mongo[:holdings].find.map { |h| h }
 
+  # Create the query
+  #
+  # This is basically: "Give me all of the historical entries where the
+  # distribution of coins is exactly as it is now"
+  # This should give us all entries since trhe last rebalance regardless of when
+  # that was
+  this_week_query = []
+  current_holdings.each do |holding|
+    this_week_query << {
+      'holdings' => {
+        '$elemMatch' => {
+          'name' => holding['name'],
+          'amount' => holding['amount'],
+        }
+      }
+    }
+  end
 
-  color = Color::RGB.by_hex("#F7931A")
-  bg    = color
-  line  = color.lighten_by(60)
+  # Exacute the query to het historical holdings data
+  this_week_history = @mongo[:historical_holdings].find({'$and' => this_week_query})
 
-  datasets = [{
-    label: "Bitcoin",
-    backgroundColor: bg.html,
-    # borderColor: "#FF3B3B",
-    borderColor: line.html,
-    data: [{
-      x: 0.5,
-      y: 0.5,
-      r: 100,
-    }],
-    borderWidth: 2,
+  # Map this to an array instead of an Enumerator
+  this_week_history = this_week_history.map { |a| a }
 
-  }]
+  # Calculate how much each of these things have moved
+  movements = []
+  current_holdings.each do |holding|
+    movements << {
+      name: holding['name'],
+      growth_percent: (calculate_percent_growth(this_week_history,holding['name'])*100).round(1),
+      growth_value: calculate_value_growth(this_week_history,holding['name']),
+      percent_of_fund: ((holding['value'].to_f / get_stat('usd_value').to_f) * 100.0).round(1)
+    }
+  end
+
+  datasets = []
+  movements.each do |movement|
+    datasets << {
+      label: movement[:name],
+      backgroundColor: COLORS[movement[:name].to_sym],
+      borderColor: Color::RGB.by_hex(COLORS[movement[:name].to_sym]).lighten_by(60).html,
+      data: [{
+        x: movement[:growth_percent],
+        y: movement[:percent_of_fund],
+        r: (movement[:growth_value] / 10000).abs,
+      }],
+      borderWidth: 2,
+    }
+  end
+
   send_event('contribution',{ datasets: datasets })
 end
 
@@ -166,3 +215,6 @@ SCHEDULER.every "5s" do
   data  = values_to_graph(historical_value(depth),:time,:value)
   send_event('usd_value', { points: data[:points], labels: data[:labels] })
 end
+#
+# require 'pry'
+# binding.pry

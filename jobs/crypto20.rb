@@ -79,12 +79,20 @@ def get_holding(hldgs,name)
 end
 
 def calculate_percent_growth(history,coin)
+  # Make this return something sane if there is no history
+  if history.empty?
+    return 0.0
+  end
   initial_value = get_holding(history.first['holdings'],coin)['value'].to_f
   final_value   = get_holding(holdings,coin)['value'].to_f
   (final_value - initial_value) / initial_value
 end
 
 def calculate_value_growth(history,coin)
+  # Make this return something sane if there is no history
+  if history.empty?
+    return 0
+  end
   initial_value = get_holding(history.first['holdings'],coin)['value']
   final_value   = get_holding(holdings,coin)['value']
   final_value - initial_value
@@ -180,7 +188,7 @@ SCHEDULER.every "5s" do
   current_holdings.each do |holding|
     movements << {
       name: holding['name'],
-      growth_percent: (calculate_percent_growth(this_week_history,holding['name'])*100).round(1),
+      growth_percent: (calculate_percent_growth(this_week_history,holding['name'])*100.0).round(1),
       growth_value: calculate_value_growth(this_week_history,holding['name']),
       percent_of_fund: ((holding['value'].to_f / get_stat('usd_value').to_f) * 100.0).round(1)
     }
@@ -193,6 +201,14 @@ SCHEDULER.every "5s" do
   # TODO: Make the dot size relative to the largest dot
   datasets = []
   movements.each do |movement|
+    # Keep the curcle sizes to 1 pixel per $10k until we hit 70px, then make
+    # them relative to the largest
+    if biggest_movement <= 700000
+      radius = movement[:growth_value].abs.to_f / 10000.0
+    else
+      radius = (movement[:growth_value].abs.to_f / biggest_movement.to_f) * 70.0
+    end
+
     datasets << {
       label: movement[:name],
       backgroundColor: COLORS[movement[:name].to_sym],
@@ -201,7 +217,7 @@ SCHEDULER.every "5s" do
       data: [{
         x: movement[:growth_percent],
         y: movement[:percent_of_fund],
-        r: (movement[:growth_value].abs.to_f / biggest_movement.to_f) * 70.0,
+        r: radius,
       }],
       borderWidth: 2,
     }
@@ -219,6 +235,3 @@ SCHEDULER.every "5s" do
   data  = values_to_graph(historical_value(depth),:time,:value)
   send_event('usd_value', { points: data[:points], labels: data[:labels] })
 end
-#
-# require 'pry'
-# binding.pry

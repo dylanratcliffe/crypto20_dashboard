@@ -58,21 +58,23 @@ class Dashing.Chartjs extends Dashing.Widget
             display: true,
             labelString: '% of Fund',
             fontColor: '#ffffff',
-            # ticks: {
-            #   callback: function(value, index, values) {
-            #     return value + '%';
-            #   }
-            # }
+            ticks: {
+              fontColor: "rgba(255,255,255,0.6)",
+              callback: `function(value, index, values) {
+                return value + '%';
+              }`
+            }
           }],
           yAxes: [{
             display: true,
             labelString: '% Growth',
             fontColor: '#ffffff',
-            # ticks: {
-            #   callback: function(value, index, values) {
-            #     return value + '%';
-            #   }
-            # }
+            ticks: {
+              fontColor: "rgba(255,255,255,0.6)",
+              callback: `function(value, index, values) {
+                return value + '%';
+              }`
+            }
           }]
         }
       }

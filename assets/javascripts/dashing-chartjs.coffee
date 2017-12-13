@@ -12,6 +12,12 @@ class Dashing.Chartjs extends Dashing.Widget
         animation: {
           animateScale: false,
           animateRotate: false
+        },
+        tooltips: {
+          callbacks: {
+            label: `function (t,e) {
+              return (e.labels[t.index] + ": " + e.datasets[t.datasetIndex].data[t.index].toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,').replace(/(^-?)/,'$1\$'))}`
+          }
         }
       }
     }

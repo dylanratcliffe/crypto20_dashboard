@@ -52,6 +52,7 @@ COLORS = {
   SIA:   "#00CBA0",
   DAO:   "#FF3B3B",
   BTG:   "#F7931A",
+  PPT:   "#252A3B",
 }
 
 def get_stat(stat)
@@ -113,7 +114,7 @@ SCHEDULER.every '3s' do
   holdings.each do |asset|
     split << {
       value: asset['value'],
-      color: COLORS[asset['name'].to_sym],
+      color: COLORS[asset['name'].to_sym] || "#ffffff",
       label: asset['name']
     }
   end

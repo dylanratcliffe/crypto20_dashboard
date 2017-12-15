@@ -66,12 +66,13 @@ def holdings
 end
 
 def historical_value(lim)
-  @mongo[:historical_value].find.sort({_id:-1}).limit(lim).map do |entry|
+  data = @mongo[:historical_value].find.sort({_id:-1}).limit(lim).map do |entry|
     {
       time: entry['time'],
       value: entry['value'],
     }
   end
+  data.reverse! # It returns in the wrong order
 end
 
 def get_holding(hldgs,name)

@@ -16,7 +16,6 @@ class Dashing.Chartjs extends Dashing.Widget
         tooltips: {
           callbacks: {
             label: `function (t,e) {
-              # TODO: Remove the .00
               return (e.labels[t.index] + ": " + e.datasets[t.datasetIndex].data[t.index].toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,').replace(/(^-?)/,'$1\$'))}`
           }
         }
@@ -56,7 +55,6 @@ class Dashing.Chartjs extends Dashing.Widget
         tooltips: {
           callbacks: {
             label: `function (t,e) {
-              # TODO: Remove the .00
               var n=e.datasets[t.datasetIndex].label||"",i=e.datasets[t.datasetIndex].data[t.index];
               return n+": "+(e.datasets[t.datasetIndex].dollarGrowth).toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,').replace(/(^-?)/,'$1\$')}`
           }

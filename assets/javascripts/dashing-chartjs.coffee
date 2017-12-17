@@ -115,6 +115,14 @@ class Dashing.Chartjs extends Dashing.Widget
         tooltips: {
           mode: 'index',
           intersect: false,
+          callbacks: {
+            title: `function(tooltipItem) {
+              return new Date(tooltipItem[0].xLabel * 1000);
+            }`,
+            label: `function(tooltipItem, data) {
+              return data.datasets[0].data[tooltipItem.index].y.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,').replace(/(^-?)/,'$1\$');
+            }`
+          }
         },
         hover: {
           mode: 'nearest',

@@ -55,6 +55,10 @@ COLORS = {
   PPT:   "#252A3B",
 }
 
+def get_color(color_name)
+  COLORS[color_name.to_sym] || "#ffffff"
+end
+
 def get_stat(stat)
   @mongo[:statistics].find({
     name: stat,
@@ -123,7 +127,7 @@ SCHEDULER.every '3s' do
   holdings.each do |asset|
     split << {
       value: asset['value'],
-      color: COLORS[asset['name'].to_sym] || "#ffffff",
+      color: get_color(asset['name']),
       label: asset['name']
     }
   end
@@ -212,8 +216,8 @@ SCHEDULER.every "5s" do
 
     datasets << {
       label: movement[:name],
-      backgroundColor: COLORS[movement[:name].to_sym],
-      borderColor: Color::RGB.by_hex(COLORS[movement[:name].to_sym]).lighten_by(60).html,
+      backgroundColor: get_color(movement[:name]),
+      borderColor: Color::RGB.by_hex(get_color(movement[:name])).lighten_by(60).html,
       dollarGrowth: movement[:growth_value],
       data: [{
         x: movement[:growth_percent],

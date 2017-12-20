@@ -53,6 +53,7 @@ COLORS = {
   DAO:   "#FF3B3B",
   BTG:   "#F7931A",
   PPT:   "#252A3B",
+  TRX:   "#1A1B1A",
 }
 
 def get_color(color_name)

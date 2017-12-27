@@ -54,6 +54,7 @@ COLORS = {
   BTG:   "#F7931A",
   PPT:   "#252A3B",
   TRX:   "#1A1B1A",
+  XVG:   "#1186B1",
 }
 
 def get_color(color_name)

@@ -118,13 +118,8 @@ def values_to_graph(values,label_key,value_key)
   { points: points, labels: labels }
 end
 
-SCHEDULER.every '3s' do
-  # Get current value for graph
-  current_value = get_stat('usd_value').to_f
-
-  # Send an event to update the number but not the whole graph
-  send_event('usd_value', value: current_value)
-
+# Refresh all other elements every 3 sec
+SCHEDULER.every '1m', first: :now do
   # Calculate split
   split = []
   holdings.each do |asset|
@@ -163,7 +158,7 @@ SCHEDULER.every '3s' do
 end
 
 # Populate Bubble chart
-SCHEDULER.every "5s" do
+SCHEDULER.every "1m", first: :now do
   # Get all of the holdings and convert taht to an array of hashes
   current_holdings = @mongo[:holdings].find.map { |h| h }
 
@@ -235,11 +230,16 @@ SCHEDULER.every "5s" do
 end
 
 
-# I can't work out a nice way of providing the data to the clients initally when
-# they load the dashobard. For now I'll just put a timer on and re-send the
-# whole thing every two seconds. There must be a better way to do this
-SCHEDULER.every "5s" do
-  depth = 290
-  data  = values_to_graph(historical_value(depth),:time,:value)
-  send_event('usd_value', { points: data[:points], labels: data[:labels] })
+#
+# THE HISTORICAL GRAPH
+#
+SCHEDULER.every "10m", first: :now do
+  current_value = get_stat('usd_value').to_f
+  depth         = 290
+  data          = values_to_graph(historical_value(depth),:time,:value)
+  send_event('usd_value', {
+    points: data[:points],
+    labels: data[:labels],
+    value:  current_value,
+  })
 end

@@ -7,7 +7,7 @@ class Dashing.Bubble extends Dashing.Chartjs
 
 
   ready: ->
-    @chart = @bubbleChart("bubble")
+    @chart = @bubbleChart("bubble",@get('datasets'))
     @chart
 
   onData: (data) ->

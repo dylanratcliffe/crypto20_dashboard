@@ -23,11 +23,11 @@ class Dashing.Chartjs extends Dashing.Widget
     }
     new Chart(document.getElementById(id).getContext("2d"), config)
 
-  bubbleChart: (id) ->
+  bubbleChart: (id,datasets) ->
     config = {
       type: 'bubble',
       data: {
-        datasets: [],
+        datasets: datasets,
       },
       options: {
         responsive: true,

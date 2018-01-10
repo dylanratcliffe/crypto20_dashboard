@@ -56,6 +56,7 @@ COLORS = {
   TRX:   "#1A1B1A",
   XVG:   "#1186B1",
   ICX:   "#38C3C7",
+  XRB:   "#BCD541",
 }
 
 def get_color(color_name)

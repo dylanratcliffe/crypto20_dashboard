@@ -120,7 +120,6 @@ def values_to_graph(values,label_key,value_key)
   { points: points, labels: labels }
 end
 
-# Refresh all other elements every 3 sec
 SCHEDULER.every '1m', first: :now do
   # Calculate split
   split = []
@@ -203,7 +202,7 @@ SCHEDULER.every "1m", first: :now do
   biggest_mover    = movements.sort { |x,y|  x[:growth_value].abs <=> y[:growth_value].abs }.last
   biggest_movement = biggest_mover[:growth_value].abs
 
-  # TODO: Make the dot size relative to the largest dot
+  # This actually turns the raw data into bubbles
   datasets = []
   movements.each do |movement|
     # Keep the curcle sizes to 1 pixel per $10k until we hit 70px, then make
@@ -228,7 +227,10 @@ SCHEDULER.every "1m", first: :now do
     }
   end
 
-  send_event('contribution',{ datasets: datasets })
+  send_event('contribution',{
+    datasets: datasets,
+    last_rebalance: this_week_history.first['time'],
+  })
 end
 
 

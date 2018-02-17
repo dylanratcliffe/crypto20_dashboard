@@ -8,7 +8,7 @@ class Dashing.Bubble extends Dashing.Chartjs
   @accessor 'last-rebalance', ->
     value = @get('last_rebalance')
     if value
-      "Last rebalanced " + timeAgo(value) + "ago"
+      "Last rebalanced " + timeAgo(value) + " ago"
 
   ready: ->
     @chart = @bubbleChart("bubble",@get('datasets'))

@@ -58,6 +58,7 @@ COLORS = {
   ICX:   "#38C3C7",
   XRB:   "#BCD541",
   VEN:   "#7D80D5",
+  NANO:  "#4C92DD",
 }
 
 def get_color(color_name)

@@ -59,6 +59,7 @@ COLORS = {
   XRB:   "#BCD541",
   VEN:   "#7D80D5",
   NANO:  "#4C92DD",
+  BNB:   "#F2B940",
 }
 
 def get_color(color_name)

@@ -61,6 +61,7 @@ COLORS = {
   NANO:  "#4C92DD",
   BNB:   "#F2B940",
   BCN:   "#EE4586",
+  ONT:   "#4BA3BD",
 }
 
 def get_color(color_name)

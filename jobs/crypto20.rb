@@ -63,6 +63,8 @@ COLORS = {
   BCN:   "#EE4586",
   ONT:   "#4BA3BD",
   ZRX:   "#1D2227",
+  BAB:   "#211091",
+  BSV:   "#B99E3D",
 }
 
 def get_color(color_name)
